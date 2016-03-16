@@ -1,0 +1,1545 @@
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
+import java.lang.Math;
+
+/**
+ * Generates input txt files for a permutation set for RELAP simulation
+ * 
+ * @author (your name) 
+ * @version (a version number or a date)
+ */
+public class makeRelapInputPermutaions
+{
+    static double pi = 3.14159;
+    static double core_flowrate = 977.0;     // kg/s
+    static double bypass_flowrate = 97.7;    // kg/s
+    static double DHX_shell_flowrate = 9.77; // kg/s
+    static double DHX_tube_flowrate = 8.5;   // kg/s - changed from 11.9 kg/s
+    static double TCorein = 873.0;           // K
+    static double TCoreout = 973.0;          // K
+    static double TDHX_in = 799.0;           // K
+    static double TDHX_out = 840.0;          // K - changed from 881 K
+    static double TDHX_shell_out = 833.0;    // K
+
+    
+    /**
+     * Generates Relap Input Text file Permutations based upon the variables mentioned below. When changing
+     * the variable, make sure to put all your variables in the array allVars[]
+     */
+    public static void main()
+    {
+        //DSS variables
+        Variable lr = new Variable(1.0,1.0,1.0);
+        Variable Dr = new Variable(1.0,1.0,1.0);
+        Variable mo_core = new Variable(1.0,1.0,1.0);
+        Variable mo_bypass = new Variable(0.01,1.0,0.01);
+        Variable mo_DHX_shell = new Variable(1.0,1.0,1.0);
+        Variable mo_DHX_tube = new Variable(1.0,1.0,1.0);
+        Variable To_core_in = new Variable(1.0,1.0,1.0);
+        Variable To_core_out = new Variable(1.0,1.0,1.0);
+        Variable To_DHX_in = new Variable(1.0,1.0,1.0);
+        Variable To_DHX_out = new Variable(1.0,1.0,1.0);
+        Variable To_DHX_out_shell = new Variable(1.0,1.0,1.0);
+        Variable dumdum= new Variable(1.0,1.0,25.0);
+        
+        Variable lr = new Variable(0.05,0.2,0.5);
+        Variable Dr = new Variable(1.0,1.0,1.0);
+        Variable mo_core = new Variable(1.0,1.0,1.0);
+        Variable mo_bypass = new Variable(0.01,1.0,0.01);
+        Variable mo_DHX_shell = new Variable(1.0,1.0,1.0);
+        //Variable mo_DHX_tube = new Variable(0.05,0.05,0.15);
+        //Variable To_core_in = new Variable(0.05,0.05,0.15);
+        //Variable To_core_out = new Variable(0.05,0.05,0.15);
+        Variable To_DHX_in = new Variable(1.0,1.0,1.0);
+        Variable To_DHX_out = new Variable(1.0,1.0,1.0);
+        Variable To_DHX_out_shell = new Variable(1.0,1.0,1.0);
+        Variable dumdum= new Variable(1.0,1.0,25.0);
+
+        
+
+
+        Variable[] allVars = new Variable[12];
+
+        allVars[0] = lr; //relative length
+        allVars[1] = Dr; //relative diameter
+        allVars[2] = mo_core; //initial core mass flowrate
+        allVars[3] = mo_bypass; //initial bypass flowrate
+        allVars[4] = mo_DHX_shell;//initial DHX shell-side flowrate
+        allVars[5] = mo_DHX_tube;//initial DHX tube-side flowrate (upwards)
+        allVars[6] = To_core_in;//initial core inlet T
+        allVars[7] = To_core_out;//initial core outlet
+        allVars[8] = To_DHX_in;//initial DHX tube-side inlet T
+        allVars[9] = To_DHX_out;//initial DHX tube-side outlet T
+        allVars[10] = To_DHX_out_shell;//initial DHX shell-side outlet T
+        allVars[11] = dumdum;
+        
+        //allVars[2] = pipeHieght;
+
+        //the file path of where you would like to place the text file permutation
+        String filePath = "/Users/aprilnovak/Documents/RELAP Perm/RELAP Perm/April Output Files/PermutationOutput/";
+
+        for( int j = 0; j < calcPermNum( allVars ); j++ )
+        {
+            try
+            {
+
+                File newTXTFile = new File( filePath + makeFileName(allVars) );
+                // if file doesnt exists, then create it
+                if( !newTXTFile.exists() )
+                {
+                    newTXTFile.createNewFile();
+                }
+
+                FileWriter curTXTFile = new FileWriter( newTXTFile.getAbsoluteFile() );
+                BufferedWriter TXT = new BufferedWriter( curTXTFile );
+
+                
+                
+                { //Your Code from the RELAPToCode Generator
+TXT.write( "=Mk1 PB-FHR Simplified Model for LOFC Analysis "); TXT.newLine();
+TXT.write( "* Using equivalent CTAH (2 in 1) and DRACS (2 in 1) loops "); TXT.newLine();
+TXT.write( "* Using idealized boundary conditions on CTAH and TCHX secondary sides "); TXT.newLine();
+TXT.write( "* Parameters to be adjusted before each run: "); TXT.newLine();
+TXT.write( "* - Forward form loss coefficient for fluidic diode (card 6070101) "); TXT.newLine();
+TXT.write( "* - Pump coast down parameters (search 'tmdpjun') "); TXT.newLine();
+TXT.write( "* - Power distribution in core (cards 101017NN and 202010NN) "); TXT.newLine();
+TXT.write( "* Future updates: "); TXT.newLine();
+TXT.write( "* - Implement actual heat transfer correlations for CTAH and TCHX "); TXT.newLine();
+TXT.write( "* - Implement radiative heat transfer for TCHX "); TXT.newLine();
+TXT.write( "* - Implement point kinetics model "); TXT.newLine();
+TXT.write( "* - Include actual pump model "); TXT.newLine();
+TXT.write( "* - Add heat structures for structural materials, reflectors, etc. "); TXT.newLine();
+TXT.write( "* New problem using non-standard fluid; transient mode "); TXT.newLine();
+TXT.write( "100 newath transnt "); TXT.newLine();
+TXT.write( "* SI units for input; SI units for output "); TXT.newLine();
+TXT.write( "102 si si "); TXT.newLine();
+TXT.write( "* Reference volume; reference elevation; fluid (flibe) "); TXT.newLine();
+TXT.write( "120   10010000 0.0000  ms1 "); TXT.newLine();
+TXT.write( "121  190010000 " + 5.3400*lr.value() + "  ms1 "); TXT.newLine();
+TXT.write( "* End time; min time step; max time step; control option; "); TXT.newLine();
+TXT.write( "* Minor edit frequency; major edit frequency; restart frequency "); TXT.newLine();
+TXT.write( "201   1000.0  1.0e-7 0.1  15011  1000  10000 10000 "); TXT.newLine();
+TXT.write( "202  10000.0  1.0e-7 0.1  15011  10    10000 10000 "); TXT.newLine();
+TXT.write( "* Minor edit requests: variable request code; parameter "); TXT.newLine();
+TXT.write( "301  mflowfj  10010000 "); TXT.newLine();
+TXT.write( "302  mflowfj  20010000 "); TXT.newLine();
+TXT.write( "303  mflowfj 170010000 "); TXT.newLine();
+TXT.write( "304  mflowfj 190010000 "); TXT.newLine();
+TXT.write( "305  tempf   280010000 "); TXT.newLine();
+TXT.write( "306  tempf    30010000 "); TXT.newLine();
+TXT.write( "307  tempf   160030000 "); TXT.newLine();
+TXT.write( "308  tempf   180010000 "); TXT.newLine();
+TXT.write( "309  tempf   250340000 "); TXT.newLine();
+TXT.write( "310  tempf   200010000 "); TXT.newLine();
+TXT.write( "311  tempf   220150000 "); TXT.newLine();
+TXT.write( "312  tempf   240010000 "); TXT.newLine();
+TXT.write( "  "); TXT.newLine();
+TXT.write( "************************** "); TXT.newLine();
+TXT.write( "* Hydrodynamic components "); TXT.newLine();
+TXT.write( "************************** "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Active core region "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "100000 core pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "100001 26 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "100101 " + 0.4*pi*(1.05*1.05*Dr.value()*Dr.value()-0.35*0.35*Dr.value()*Dr.value()) + ",26 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "100301 " + 4.58*lr.value()/26 + ",26 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "100601 90.0,26 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for graphite: k=0.015mm "); TXT.newLine();
+TXT.write( "100801 1.5e-5," + 0.03*Dr.value() + ",26 "); TXT.newLine();
+TXT.write( "* A_f; A_r; junction number "); TXT.newLine();
+TXT.write( "100901 " + getRandFloat(30,50,2) + " 10.0 25 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "101001 10,26 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "101101 0,25 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "101201 3,1.80e5," + TCorein*To_core_in.value() + ",0.,0.,0.,26 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "101300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "101301 " + core_flowrate*mo_core.value() + ", " + core_flowrate*mo_core.value() + ", 0., 25 "); TXT.newLine();
+TXT.write( "* Hydraulic diameter; flooding correlation (enter 0.0); vapor/gas "); TXT.newLine();
+TXT.write( "* intercept (enter 1.0); slope (enter 1.0);junction number "); TXT.newLine();
+TXT.write( "101401 " + 0.03*Dr.value() + ",0.,1.,1.,25 "); TXT.newLine();
+TXT.write( "* B_f; C_f; B_r; C_r; junction number "); TXT.newLine();
+TXT.write( "103001 4974.4 1.0 4974.4 1.0 25 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Core bypass "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "200000 bypass pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "200001 26 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "200101 " + 827.6064031*pi*0.01*0.01*Dr.value()*Dr.value()/4 + ",26 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "200301 " + 4.58*lr.value()/26 + ",26 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "200601 90.0,26 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for graphite: k=0.015mm "); TXT.newLine();
+TXT.write( "200801 1.5e-5," + 0.01*Dr.value() + ",26 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "* A_f; A_r; junction number "); TXT.newLine();
+TXT.write( "200901 " + getRandFloat(500000,600000,2) + " 10.0 25 "); TXT.newLine();
+TXT.write( "201001 0,26 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "201101 0,25 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "201201 3,1.80e5," + TCorein*To_core_in.value() + ",0.,0.,0.,26 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "201300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "201301 " + bypass_flowrate*mo_bypass.value() + "," + bypass_flowrate*mo_bypass.value() + ",0.,25 "); TXT.newLine();
+TXT.write( "* B_f; C_f; B_r; C_r; junction number "); TXT.newLine();
+TXT.write( "203001 10.0 1.0 10.0 1.0 25 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Hot salt collection ring "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "300000 hotring branch "); TXT.newLine();
+TXT.write( "* Number of junctions; control word (0: velocities, 1: mass flow rates) "); TXT.newLine();
+TXT.write( "300001 3 1 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume length; volume of volume (calculated if 0.0) "); TXT.newLine();
+TXT.write( "* Azimuthal angle; vertical angle; elevation change; wall roughness "); TXT.newLine();
+TXT.write( "* Hydraulic diameter; tlpvbfe "); TXT.newLine();
+TXT.write( "300101 " + pi*0.5656244*0.5656244*Dr.value()*Dr.value()/4 + " " + 3.960000*lr.value() + " 0. 0. 0. 0. 1.5e-5 " + 0.5656244*Dr.value() + " 0 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T "); TXT.newLine();
+TXT.write( "300200 3 1.76e5 " + TCoreout*To_core_out.value() + " "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "301101  10010000  30000000 " + pi*0.5656244*0.5656244*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "302101  20010000  30000000 " + 827.6064031*pi*0.01*0.01*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "303101  30010000  40000000 " + pi*0.5656244*0.5656244*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "301201 " + core_flowrate*mo_core.value() + " " + core_flowrate*mo_core.value() + " 0. "); TXT.newLine();
+TXT.write( "302201 " + bypass_flowrate*mo_bypass.value() + " " + bypass_flowrate*mo_bypass.value() + " 0. "); TXT.newLine();
+TXT.write( "303201 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Hot salt extraction pipe "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "400000 extract pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "400001 21 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "400101 " + pi*0.5656244*0.5656244*Dr.value()*Dr.value()/4 + ",21 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "400301 " + 3.77*lr.value()/21 + ",21 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "400601 90.0,21 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "400801 1.5e-5, " + 0.5656244*Dr.value() + ", 21 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "401001 0,21 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "401101 0,20 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "401201 3,1.08e5," + TCoreout*To_core_out.value() + ",0.,0.,0.,21 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "401300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "401301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + ",0.,20 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Reactor vessel to hot salt well "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "500000 vesswell pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "500001 21 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "500101 " + pi*0.58*0.58*Dr.value()*Dr.value()/4 + ",21 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "500301 " + 3.73*lr.value()/21 + ",21 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "500601 1.24432251,21 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "500801 1.5e-5," + 0.58*Dr.value() + ",21 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "501001 0,21 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "501101 0,20 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "501201 3,1.06e5," + TCoreout*To_core_out.value() + ",0.,0.,0.,21 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "501300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "501301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,20 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Hot salt well "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "600000 hotwell pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "600001 11 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "600101 " + 2*pi*1.45261*1.45261*Dr.value()*Dr.value()/4 + ",11 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "600301 " + 2*lr.value()/11 + ",11 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "600601 9.78781906,11 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "600801 1.5e-5," + 1.45261*Dr.value() + ",11 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "601001 0,11 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "601101 0,10 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "601201 3,1.00e5," + TCoreout*To_core_out.value() + ",0.,0.,0.,11 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "601300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "601301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,10 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Hot salt well to CTAH "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "700000 wellctah pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "700001 18 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "700101 " + 2*pi*0.439995*0.439995*Dr.value()*Dr.value()/4 + ",18 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "700301 " + 3.23*lr.value()/18 + ",18 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "700601 -0.81600463,18 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "700801 1.5e-5," + 0.439995*Dr.value() + ",18 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "701001 0,18 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "701101 0,17 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "701201 3,4.81e5," + TCoreout*To_core_out.value() + ",0.,0.,0.,18 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "701300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "701301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,17 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* CTAH hot manifold "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "800000 ctahhot pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "800001 19 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "800101 " + 4*2*pi*0.28*0.28*Dr.value()*Dr.value()/4 + ",19 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "800301 " + 3.418*lr.value()/19 + ",19 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "800601 -90.0,19 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "800801 1.5e-5," + 0.28*Dr.value() + ",19 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "801001 0,19 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "801101 0,18 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "801201 3,5.43e5," + TCoreout*To_core_out.value() + ",0.,0.,0.,19 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "801300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "801301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,18 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* CTAH tubes (salt side) "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "900000 ctahtube pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "900001 99 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "900101 " + 13680*2*pi*0.00457*0.00457*Dr.value()*Dr.value()/4 + ",99 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "900301 " + 18.47*lr.value()/99 + ",99 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "900601 -0.50875102,99 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "900801 1.5e-5," + 0.00457*Dr.value() + ",99 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "901001 0,99 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "901101 0,98 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "901201 3,2.92e5," + (TCorein*To_core_in.value()+TCoreout*To_core_out.value())/2 + ",0.,0.,0.,99 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "901300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "901301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,98 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* CTAH cold manifold "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1000000 ctahcold pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1000001 19 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1000101 " + 4*2*pi*0.175*0.175*Dr.value()*Dr.value()/4 + ",19 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1000301 " + 3.418*lr.value()/19 + ",19 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1000601 -90.0,19 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1000801 1.5e-5," + 0.175*Dr.value() + ",19 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1001001 0,19 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1001101 0,18 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1001201 3,3.53e5," + TCorein*To_core_in.value() + ",0.,0.,0.,19 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1001300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1001301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,18 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* CTAH to drain tank "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1100000 ctahdrn pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1100001 20 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1100101 " + 2*pi*0.438406*0.438406*Dr.value()*Dr.value()/4 + ",20 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1100301 " + 3.48*lr.value()/20 + ",20 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1100601 -1.23491845,20 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1100801 1.5e-5," + 0.438406*Dr.value() + ",20 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1101001 0,20 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1101101 0,19 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1101201 3,3.54e5," + TCorein*To_core_in.value() + ",0.,0.,0.,20 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1101300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1101301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,19 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Stand pipe "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1200000 stdpipe pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1200001 37 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1200101 " + 2*pi*0.438406*0.438406*Dr.value()*Dr.value()/4 + ",37 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1200301 " + 6.51*lr.value()/37 + ",37 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1200601 90.0,37 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1200801 1.5e-5," + 0.438406*Dr.value() + ",37 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1201001 0,37 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1201101 0,36 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1201201 3,2.30e5," + TCorein*To_core_in.value() + ",0.,0.,0.,37 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1201300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1201301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,36 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Stand pipe to reactor vessel "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1300000 stdvess pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1300001 37 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1300101 " + 2*pi*0.438406*0.438406*Dr.value()*Dr.value()/4 + ",37 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1300301 " + 6.603338*lr.value()/37 + ",37 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1300601 1.21484167,37 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1300801 1.5e-5," + 0.438406*Dr.value() + ",37 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1301001 0,37 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1301101 0,36 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1301201 3,2.26e5," + TCorein*To_core_in.value() + ",0.,0.,0.,37 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1301300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1301301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,36 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Injection plenum "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1400000 plenum pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1400001 17 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1400101 " + 2*pi*0.438406*0.438406*Dr.value()*Dr.value()/4 + ",17 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1400301 " + 3.04*lr.value()/17 + ",17 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1400601 -90.0,17 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1400801 1.5e-5," + 0.438406*Dr.value() + ",17 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1401001 0,17 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1401101 0,16 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1401201 3,2.82e5," + TCorein*To_core_in.value() + ",0.,0.,0.,17 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1401300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1401301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + ",0.,16 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Downcomer "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1500000 dwncmr pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1500001 27 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1500101 " + 123.377300302*pi*0.056*0.056*Dr.value()*Dr.value()/4 + ",27 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1500301 " + 4.76*lr.value()/27 + ",27 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1500601 -90.0,27 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1500801 1.5e-5," + 0.056*Dr.value() + ",27 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1501001 0,27 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1501101 0,26 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1501201 3,3.65e5," + TCorein*To_core_in.value() + ",0.,0.,0.,27 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1501300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1501301 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + "," + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + ",0.,26 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Downcomer to DHX "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1600000 dwndhx pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1600001 3 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1600101 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + ",3 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1600301 " + 0.58*lr.value()/3 + ",3 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1600601 90.0,3 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1600801 1.5e-5," + 0.15*Dr.value() + ",3 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1601001 0,3 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1601101 0,2 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1601201 3,1.64e5," + TCorein*To_core_in.value() + ",0.,0.,0.,3 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1601300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1601301 " + DHX_shell_flowrate*mo_DHX_shell.value() + "," + DHX_shell_flowrate*mo_DHX_shell.value() + ",0.,2 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DHX shell side "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1700000 dhxshell pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1700001 14 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1700101 " + 2403.57817295*pi*0.01085449*0.01085449*Dr.value()*Dr.value()/4 + ",14 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1700301 " + 2.5*lr.value()/14 + ",14 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1700601 90.0,14 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1700801 1.5e-5," + 0.01085449*Dr.value() + ",14 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1700901 " + getRandFloat(10000,20000,2) + ", 10.0, 13"); TXT.newLine();
+TXT.write( "1701001 0,14 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1701101 0,13 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1701201 3,1.18e5," + (TDHX_shell_out*To_DHX_out_shell.value()+TCorein*To_core_in.value())/2 + ",0.,0.,0.,14 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1701300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1701301 " + DHX_shell_flowrate*mo_DHX_shell.value() + "," + DHX_shell_flowrate*mo_DHX_shell.value() + ",0.,13 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DHX to hot leg "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1800000 dhxtohot pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1800001 17 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1800101 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + ",17 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1800301 " + 3.008*lr.value()/17 + ",17 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1800601 9.76153245,17 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1800801 1.5e-5," + 0.15*Dr.value() + ",17 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1801001 0,17 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1801101 0,16 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1801201 3,1.08e5," + TDHX_shell_out*To_DHX_out_shell.value() + ",0.,0.,0.,17 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1801300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1801301 " + DHX_shell_flowrate*mo_DHX_shell.value() + "," + DHX_shell_flowrate*mo_DHX_shell.value() + ",0.,16 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DHX tube side "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "1900000 dhxtube pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "1900001 14 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "1900101 " + 984*2*pi*0.0109*0.0109*Dr.value()*Dr.value()/4 + ",14 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "1900301 " + 2.5*lr.value()/14 + ",14 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "1900601 90.0,14 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "1900801 1.5e-5," + 0.0109*Dr.value() + ",14 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "1900901 " + getRandFloat(1,10,2) + ", 0.0, 13"); TXT.newLine();
+TXT.write( "1901001 0,14 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "1901101 0,13 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "1901201 3,1.64e5," + (TDHX_in*To_DHX_in.value()+TDHX_out*To_DHX_out.value())/2 + ",0.,0.,0.,14 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "1901300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "1901301 " + DHX_tube_flowrate*mo_DHX_tube.value() + "," + DHX_tube_flowrate*mo_DHX_tube.value() + ",0.,13 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DRACS hot leg 1 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "2000000 dracsh1 pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "2000001 20 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "2000101 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + ",20 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "2000301 " + 3.45*lr.value()/20 + ",20 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "2000601 90.0,20 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "2000801 1.5e-5," + 0.15*Dr.value() + ",20 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "2001001 0,20 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "2001101 0,19 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "2001201 3,1.00e5," + TDHX_out*To_DHX_out.value() + ",0.,0.,0.,20 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "2001300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "2001301 " + DHX_tube_flowrate*mo_DHX_tube.value() + "," + DHX_tube_flowrate*mo_DHX_tube.value() + ",0.,19 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DRACS hot leg 2 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "2100000 dracsh2 pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "2100001 21 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "2100101 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + ",21 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "2100301 " + 3.67*lr.value()/21 + ",21 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "2100601 0.0,21 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "2100801 1.5e-5," + 0.15*Dr.value() + ",21 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "2101001 0,21 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "2101101 0,20 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "2101201 3,1.00e5," + TDHX_out*To_DHX_out.value() + ",0.,0.,0.,21 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "2101300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "2101301 " + DHX_tube_flowrate*mo_DHX_tube.value() + "," + DHX_tube_flowrate*mo_DHX_tube.value() + ",0.,20 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* TCHX manifold "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "2200000 tchxman pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "2200001 15 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "2200101 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + ",15 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "2200301 " + 2.6*lr.value()/15 + ",15 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "2200601 90.0,15 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "2200801 1.5e-5," + 0.15*Dr.value() + ",15 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "2201001 0,15 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "2201101 0,14 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "2201201 3,4.69e4," + TDHX_out*To_DHX_out.value() + ",0.,0.,0.,15 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "2201300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "2201301 " + DHX_tube_flowrate*mo_DHX_tube.value() + "," + DHX_tube_flowrate*mo_DHX_tube.value() + ",0.,14 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* TCHX salt tube "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "2300000 tchxsalt pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "2300001 34 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "2300101 " + 4*2*234*pi*0.0109*0.0109*Dr.value()*Dr.value()/4 + ",34 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "2300301 " + 6*lr.value()/34 + ",34 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "2300601 -25.67928862,34 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "2300801 1.5e-5," + 0.0109*Dr.value() + ",34 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "2301001 0,34 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "2301101 0,33 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "2301201 3,9.58e4," + (TDHX_in*To_DHX_in.value()+TDHX_out*To_DHX_out.value())/2 + ",0.,0.,0.,34 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "2301300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "2301301 " + DHX_tube_flowrate*mo_DHX_tube.value() + "," + DHX_tube_flowrate*mo_DHX_tube.value() + ",0.,33 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DRACS cold leg 1 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "2400000 dracsc1 pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "2400001 25 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "2400101 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + ",25 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "2400301 " + 4.43*lr.value()/25 + ",25 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "2400601 0.0,25 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "2400801 1.5e-5," + 0.15*Dr.value() + ",25 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "2401001 0,25 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "2401101 0,24 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "2401201 3,9.57e4," + TDHX_in*To_DHX_in.value() + ",0.,0.,0.,25 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "2401300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "2401301 " + DHX_tube_flowrate*mo_DHX_tube.value() + "," + DHX_tube_flowrate*mo_DHX_tube.value() + ",0.,24 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DRACS cold leg 2 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "2500000 dracsc2 pipe "); TXT.newLine();
+TXT.write( "* Number of elements "); TXT.newLine();
+TXT.write( "2500001 34 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume number "); TXT.newLine();
+TXT.write( "2500101 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + ",34 "); TXT.newLine();
+TXT.write( "* Volume length; volume number "); TXT.newLine();
+TXT.write( "2500301 " + 5.95*lr.value()/34 + ",34 "); TXT.newLine();
+TXT.write( "* Volume inclination angle; volume number (required) "); TXT.newLine();
+TXT.write( "2500601 -90.0,34 "); TXT.newLine();
+TXT.write( "* Wall roughness; hydraulic diameter; volume number  "); TXT.newLine();
+TXT.write( "* Here for stainless steel: k=0.015mm "); TXT.newLine();
+TXT.write( "2500801 1.5e-5," + 0.15*Dr.value() + ",34 "); TXT.newLine();
+TXT.write( "* tlpvbfe (see p.130 of Manual Appendix A); volume number "); TXT.newLine();
+TXT.write( "2501001 0,34 "); TXT.newLine();
+TXT.write( "* jefvcahs (see p.132 of Manual Appendix A); junction number "); TXT.newLine();
+TXT.write( "2501101 0,33 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T; 0; 0; 0; volume number "); TXT.newLine();
+TXT.write( "2501201 3,2.10e5," + TDHX_in*To_DHX_in.value() + ",0.,0.,0.,34 "); TXT.newLine();
+TXT.write( "* Junction initial conditions control option "); TXT.newLine();
+TXT.write( "* 0 for velocities, 1 for mass flow rates "); TXT.newLine();
+TXT.write( "2501300 1 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0); junction number "); TXT.newLine();
+TXT.write( "2501301 " + DHX_tube_flowrate*mo_DHX_tube.value() + "," + DHX_tube_flowrate*mo_DHX_tube.value() + ",0.,33 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Top branch "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "2600000 branch26 branch "); TXT.newLine();
+TXT.write( "* Number of junctions; control word (0: velocities, 1: mass flow rates) "); TXT.newLine();
+TXT.write( "2600001 3 1 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume length; volume of volume (calculated if 0.0) "); TXT.newLine();
+TXT.write( "* Azimuthal angle; vertical angle; elevation change; wall roughness "); TXT.newLine();
+TXT.write( "* Hydraulic diameter; tlpvbfe "); TXT.newLine();
+TXT.write( "2600101 " + pi*0.58*0.58*Dr.value()*Dr.value()/4 + " " + 0.500000*lr.value() + " 0. 0. 0. 0. 1.5e-5 " + 0.58*Dr.value() + " 0 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T "); TXT.newLine();
+TXT.write( "2600200 3 1.08e5 " + TCoreout*To_core_out.value() + " "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "2601101   40010000  260000000 " + pi*0.5656244*0.5656244*Dr.value()*Dr.value()/4 + " 0. 0. 0 "); TXT.newLine();
+TXT.write( "2602101  180010000  260000000 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "2603101  260010000   50000000 " + pi*0.58*0.58*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "2601201 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + " 0. "); TXT.newLine();
+TXT.write( "2602201 " + DHX_shell_flowrate*mo_DHX_shell.value() + " " + DHX_shell_flowrate*mo_DHX_shell.value() + " 0. "); TXT.newLine();
+TXT.write( "2603201  " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Middle branch "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "2700000 branch27 branch "); TXT.newLine();
+TXT.write( "* Number of junctions; control word (0: velocities, 1: mass flow rates) "); TXT.newLine();
+TXT.write( "2700001 3 1 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume length; volume of volume (calculated if 0.0) "); TXT.newLine();
+TXT.write( "* Azimuthal angle; vertical angle; elevation change; wall roughness "); TXT.newLine();
+TXT.write( "* Hydraulic diameter; tlpvbfe ");  TXT.newLine();
+TXT.write( "2700101 " + 123.377300302*pi*0.056*0.056*Dr.value()*Dr.value()/4 + " " + 0.50000*lr.value() + " 0. 0. -90. " + -0.50000*lr.value() + " 1.5e-5 " + 0.056*Dr.value() + " 0 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T "); TXT.newLine();
+TXT.write( "2700200 3 2.82e5 " + TCorein*To_core_in.value() + " "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "2701101  140010000  270000000 " + 2*pi*0.438406*0.438406*Dr.value()*Dr.value()/4 + " 0. 0. 0 "); TXT.newLine();
+TXT.write( "2702101  270010000  150000000 " + 123.377300302*pi*0.056*0.056*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "2703101  270010000  160000000 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + " 0.0 0. 100 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "2701201 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "2702201 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + " 0. "); TXT.newLine();
+TXT.write( "2703201 " + DHX_shell_flowrate*mo_DHX_shell.value() + " " + DHX_shell_flowrate*mo_DHX_shell.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Bottom branch "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "2800000 branch28 branch "); TXT.newLine();
+TXT.write( "* Number of junctions; control word (0: velocities, 1: mass flow rates) "); TXT.newLine();
+TXT.write( "2800001 3 1 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume length; volume of volume (calculated if 0.0) "); TXT.newLine();
+TXT.write( "* Azimuthal angle; vertical angle; elevation change; wall roughness "); TXT.newLine();
+TXT.write( "* Hydraulic diameter; tlpvbfe "); TXT.newLine();
+TXT.write( "2800101 " + 0.4*pi*(1.05*1.05*Dr.value()*Dr.value()-0.35*0.35*Dr.value()*Dr.value()) + " " + 0.200000*lr.value() + " 0. 0. 0. 0. 1.5e-5 " + 0.03*Dr.value() + " 0 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T "); TXT.newLine();
+TXT.write( "2800200 3 3.65e5 " + TCorein*To_core_in.value() + " "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "2801101  150010000  280000000 " + 123.377300302*pi*0.056*0.056*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "2802101  280010000   10000000 " + 0.4*pi*(1.05*1.05*Dr.value()*Dr.value()-0.35*0.35*Dr.value()*Dr.value()) + " 0. 0. 0 "); TXT.newLine();
+TXT.write( "2803101  280010000   20000000 " + 827.6064031*pi*0.01*0.01*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "2801201  " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()) + " 0. "); TXT.newLine();
+TXT.write( "2802201 " + core_flowrate*mo_core.value() + "   " + core_flowrate*mo_core.value() + "  0. "); TXT.newLine();
+TXT.write( "2803201 " + bypass_flowrate*mo_bypass.value() + " " + bypass_flowrate*mo_bypass.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Primary Loop Expansion Tank "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "4010000 tank1 tmdpvol "); TXT.newLine();
+TXT.write( "* Volume flow area; volume length; volume volume (calculated if 0); "); TXT.newLine();
+TXT.write( "* Azimuthal angle; inclination angle; elevation change; "); TXT.newLine();
+TXT.write( "* Wall roughness (1e-9 times hydraulic diameter if 0); "); TXT.newLine();
+TXT.write( "* Hydraulic diameter (calculated if 0); tlpvbfe "); TXT.newLine();
+TXT.write( "4010101 1.0 1.0 0.0 0.0 90.0 1.0 0.0 0.0 0 "); TXT.newLine();
+// tank height and area not modified
+TXT.write( "* ebt  "); TXT.newLine();
+TXT.write( "4010200 3 "); TXT.newLine();
+TXT.write( "* Search variable (time); P; T "); TXT.newLine();
+TXT.write( "4010201 0.0 1.00e5 " + TCoreout*To_core_out.value()); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Primary tank branch "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "5010000 tank1br branch "); TXT.newLine();
+TXT.write( "* Number of junctions; control word (0: velocities, 1: mass flow rates) "); TXT.newLine();
+TXT.write( "5010001 3 1 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume length; volume of volume (calculated if 0.0) "); TXT.newLine();
+TXT.write( "* Azimuthal angle; vertical angle; elevation change; wall roughness "); TXT.newLine();
+TXT.write( "* Hydraulic diameter; tlpvbfe "); TXT.newLine();
+TXT.write( "5010101 " + pi*0.58*0.58*Dr.value()*Dr.value()/4 + " " + 0.100000*lr.value() + " 0. 0. 0. 0. 1.5e-5 " + 0.58*Dr.value() + " 0 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T "); TXT.newLine();
+TXT.write( "5010200 3 1.00e5 " + TCoreout*To_core_out.value() + " "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "5011101   50010000  501000000 " + pi*0.58*0.58*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "5012101  501010000   60000000 " + pi*0.58*0.58*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "5013101  501010000  401000000 " + pi*0.58*0.58*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "5011201  " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "5012201  " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "5013201     0.0     0.0  0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DRACS Loop Expansion Tank "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "4020000 tank2 tmdpvol "); TXT.newLine();
+TXT.write( "* Volume flow area; volume length; volume volume (calculated if 0); "); TXT.newLine();
+TXT.write( "* Azimuthal angle; inclination angle; elevation change; "); TXT.newLine();
+TXT.write( "* Wall roughness (1e-9 times hydraulic diameter if 0); "); TXT.newLine();
+TXT.write( "* Hydraulic diameter (calculated if 0); tlpvbfe "); TXT.newLine();
+TXT.write( "4020101 1.0 1.0 0.0 0.0 90.0 1.0 0.0 0.0 0 "); TXT.newLine();
+//tank volume and area not modified
+TXT.write( "* ebt  "); TXT.newLine();
+TXT.write( "4020200 3 "); TXT.newLine();
+TXT.write( "* Search variable (time); P; T "); TXT.newLine();
+TXT.write( "4020201 0.0 1.00e5 " + TDHX_out*To_DHX_out.value()); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DRACS tank branch "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "5020000 tank2br branch "); TXT.newLine();
+TXT.write( "* Number of junctions; control word (0: velocities, 1: mass flow rates) "); TXT.newLine();
+TXT.write( "5020001 3 1 "); TXT.newLine();
+TXT.write( "* Volume flow area; volume length; volume of volume (calculated if 0.0) "); TXT.newLine();
+TXT.write( "* Azimuthal angle; vertical angle; elevation change; wall roughness "); TXT.newLine();
+TXT.write( "* Hydraulic diameter; tlpvbfe "); TXT.newLine();
+TXT.write( "5020101 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + " " + 0.100000*lr.value() + " 0. 0. 0. 0. 1.5e-5 " + 0.15*Dr.value() + " 0 "); TXT.newLine();
+TXT.write( "* ebt (initial conditions options); P; T "); TXT.newLine();
+TXT.write( "5020200 3 1.00e5 " + TDHX_out*To_DHX_out.value() + " "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "5021101  200010000  502000000 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + " 0. 0. 0 "); TXT.newLine();
+TXT.write( "5022101  502010000  210000000 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + " 0. 0. 0 "); TXT.newLine();
+TXT.write( "5023101  502010000  402000000 " + 2*pi*0.15*0.15*Dr.value()*Dr.value()/4 + " 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "5021201  " + DHX_tube_flowrate*mo_DHX_tube.value() + " " + DHX_tube_flowrate*mo_DHX_tube.value() + " 0. "); TXT.newLine();
+TXT.write( "5022201  " + DHX_tube_flowrate*mo_DHX_tube.value() + " " + DHX_tube_flowrate*mo_DHX_tube.value() + " 0. "); TXT.newLine();
+TXT.write( "5023201   0.0  0.0 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 70-80 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6010000 jn7080 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6010101 70010000 80000000 0.0 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6010201 1 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 80-90 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6020000 jn8090 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6020101 80010000 90000000 0.0 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6020201 1 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 90-100 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6030000 jn90100 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6030101 90010000 100000000 0.0 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6030201 1 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 100-110 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6040000 jn100110 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6040101 100010000 110000000 0.0 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6040201 1 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 110-120 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6050000 jn110120 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6050101 110010000 120000000 0.0 0. 0. 0 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6050201 1 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 120-130 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6060000 jn120130 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6060101 120010000 130000000 0.0 0. 0. 0 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6060201 1 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 130-140 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6070000 jn130140 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6070101 130010000 140000000 0.0 0. 0. 0 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6070201 1 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 160-170 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6080000 diode sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6080101 160010000 170000000 0.0 50. 1. 0 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6080201 1 " + DHX_shell_flowrate*mo_DHX_shell.value() + " " + DHX_shell_flowrate*mo_DHX_shell.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 170-180 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6090000 jn170180 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6090101 170010000 180000000 0.0 100. 100. 100 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6090201 1 " + DHX_shell_flowrate*mo_DHX_shell.value() + " " + DHX_shell_flowrate*mo_DHX_shell.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 190-200 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6100000 jn190200 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6100101 190010000 200000000 0.0 50. 50. 100 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6100201 1 " + DHX_tube_flowrate*mo_DHX_tube.value() + " " + DHX_tube_flowrate*mo_DHX_tube.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 210-220 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6110000 jn210220 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6110101 210010000 220000000 0.0 0. 0. 0 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6110201 1 " + DHX_tube_flowrate*mo_DHX_tube.value() + " " + DHX_tube_flowrate*mo_DHX_tube.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 220-230 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6120000 jn220230 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6120101 220010000 230000000 0.0 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6120201 1 " + DHX_tube_flowrate*mo_DHX_tube.value() + " " + DHX_tube_flowrate*mo_DHX_tube.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 230-240 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6130000 jn230240 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6130101 230010000 240000000 0.0 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6130201 1 " + DHX_tube_flowrate*mo_DHX_tube.value() + " " + DHX_tube_flowrate*mo_DHX_tube.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 240-250 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6140000 jn240250 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6140101 240010000 250000000 0.0 0. 0. 0 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6140201 1 " + DHX_tube_flowrate*mo_DHX_tube.value() + " " + DHX_tube_flowrate*mo_DHX_tube.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Junction 250-190 "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "6150000 jn250190 sngljun "); TXT.newLine();
+TXT.write( "* From; to; junction area; A_f; A_r; jefvcahs "); TXT.newLine();
+TXT.write( "6150101 250010000 190000000 0.0 0. 0. 100 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "* Initial liquid velocity; initial gas velocity; "); TXT.newLine();
+TXT.write( "* Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "6150201 1 " + DHX_tube_flowrate*mo_DHX_tube.value() + " " + DHX_tube_flowrate*mo_DHX_tube.value() + " 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Primary pump "); TXT.newLine();
+TXT.write( "* Component name; component type "); TXT.newLine();
+TXT.write( "7010000 pripump tmdpjun "); TXT.newLine();
+TXT.write( "* From; to; junction area; jefvcahs "); TXT.newLine();
+TXT.write( "7010101 60010000 70000000 " + 2*pi*0.439995*0.439995*Dr.value()*Dr.value()/4 + " 0 "); TXT.newLine();
+TXT.write( "* Control word (0 for velocities, 1 for mass flow rates) "); TXT.newLine();
+TXT.write( "7010200 1 "); TXT.newLine();
+TXT.write( "* Time; Liquid velocity; Gas velocity; Interface velocity (enter 0.0) "); TXT.newLine();
+TXT.write( "7010201 0.00000 " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. 0. "); TXT.newLine();
+TXT.write( "7010202 1000.0  " + (core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + " 0. 0. "); TXT.newLine();
+TXT.write( "7010203 1003.0  " + 0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "  0. 0. "); TXT.newLine();
+TXT.write( "7010204 1006.0  " + 0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "  0. 0. "); TXT.newLine();
+TXT.write( "7010205 1009.0  " + 0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "  0. 0. "); TXT.newLine();
+TXT.write( "7010206 1012.0  " + 0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "   0. 0. "); TXT.newLine();
+TXT.write( "7010207 1015.0  " + 0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "   0. 0. "); TXT.newLine();
+TXT.write( "7010208 1018.0  " + 0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "   0. 0. "); TXT.newLine();
+TXT.write( "7010209 1021.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010210 1024.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010211 1027.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010212 1030.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010213 1033.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010214 1036.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010215 1039.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010216 1042.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010217 1045.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010218 1048.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010219 1051.0  " + 0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.5*0.55*(core_flowrate*mo_core.value()+bypass_flowrate*mo_bypass.value()+DHX_shell_flowrate*mo_DHX_shell.value()) + "    0. 0. "); TXT.newLine();
+TXT.write( "7010220 1054.0  0.00    0. 0. "); TXT.newLine();
+TXT.write( "7010221 10000.  0.00    0. 0. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "*********************************************************** "); TXT.newLine();
+TXT.write( "* Heat structures "); TXT.newLine();
+TXT.write( "*********************************************************** "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Active core "); TXT.newLine();
+TXT.write( "* Number of axial heat structures; number of radial mesh points; "); TXT.newLine();
+TXT.write( "* Geometry type (3: spherical, coupled to hydrodynamic component); "); TXT.newLine();
+TXT.write( "* Steady-state initialization flag (1: initial T calculated by code); "); TXT.newLine();
+TXT.write( "* Left boundary coordinate; reflood condition "); TXT.newLine();
+TXT.write( "10101000 26 13 3 1 0.0 0 "); TXT.newLine();
+TXT.write( "* Mesh location flag; mesh format flag (see p.252 of Manual Appendix A) "); TXT.newLine();
+TXT.write( "10101100 0 1 "); TXT.newLine();
+TXT.write( "* Number of intervals; right coordinate "); TXT.newLine();
+TXT.write( "10101101 5 0.0125 "); TXT.newLine();
+TXT.write( "10101102 5 0.0140 "); TXT.newLine();
+TXT.write( "10101103 2 0.0150 "); TXT.newLine();
+TXT.write( "* Composition (table number); interval number "); TXT.newLine();
+TXT.write( "10101201  101 5 "); TXT.newLine();
+TXT.write( "10101202  102 10 "); TXT.newLine();
+TXT.write( "10101203  101 12 "); TXT.newLine();
+TXT.write( "* Power input proportion; mesh interval number "); TXT.newLine();
+TXT.write( "10101301 0.0 5 "); TXT.newLine();
+TXT.write( "10101302 1.0 10 "); TXT.newLine();
+TXT.write( "10101303 0.0 12 "); TXT.newLine();
+TXT.write( "* Initial temperature; mesh point number "); TXT.newLine();
+TXT.write( "10101401 " + TCoreout + "  13 "); TXT.newLine();
+TXT.write( "* Left boundary condition definition (0: adiabatic); increment; "); TXT.newLine();
+TXT.write( "* Boundary condition type (0: adiabatic); surface area code (1: number of spheres); "); TXT.newLine();
+TXT.write( "* Number of spheres; heat structure number "); TXT.newLine();
+TXT.write( "10101501 0 0 0 1 " + ((10.4+4.8)*0.6/(4*pi*0.03*0.03*0.03*Dr.value()*Dr.value()*Dr.value()/(3*2*2*2)))/26 + " 26 "); TXT.newLine();
+TXT.write( "* Right boundary condition, see above (111: vertical bundle with cross flow, used as approximation) "); TXT.newLine();
+TXT.write( "10101601 10010000 10000 111 1 " + ((10.4+4.8)*0.6/(4*pi*0.03*0.03*0.03*Dr.value()*Dr.value()*Dr.value()/(3*2*2*2)))/26 + " 26 "); TXT.newLine();
+TXT.write( "* Power source (table number); internal source multiplier; direct mod heatin mult (left) "); TXT.newLine();
+TXT.write( "* Direct mod heatin mult (right); heat structure number "); TXT.newLine();
+TXT.write( "10101701 10 0.003614854 0.0 0.0 1 "); TXT.newLine();
+TXT.write( "10101702 10 0.010187315 0.0 0.0 2 "); TXT.newLine();
+TXT.write( "10101703 10 0.016102530 0.0 0.0 3 "); TXT.newLine();
+TXT.write( "10101704 10 0.022674992 0.0 0.0 4 "); TXT.newLine();
+TXT.write( "10101705 10 0.029576076 0.0 0.0 5 "); TXT.newLine();
+TXT.write( "10101706 10 0.034834045 0.0 0.0 6 "); TXT.newLine();
+TXT.write( "10101707 10 0.037791653 0.0 0.0 7 "); TXT.newLine();
+TXT.write( "10101708 10 0.038777522 0.0 0.0 8 "); TXT.newLine();
+TXT.write( "10101709 10 0.039106145 0.0 0.0 9 "); TXT.newLine();
+TXT.write( "10101710 10 0.039106145 0.0 0.0 10 "); TXT.newLine();
+TXT.write( "10101711 10 0.040420638 0.0 0.0 11 "); TXT.newLine();
+TXT.write( "10101712 10 0.043706868 0.0 0.0 12 "); TXT.newLine();
+TXT.write( "10101713 10 0.046335853 0.0 0.0 13 "); TXT.newLine();
+TXT.write( "10101714 10 0.046993099 0.0 0.0 14 "); TXT.newLine();
+TXT.write( "10101715 10 0.047321722 0.0 0.0 15 "); TXT.newLine();
+TXT.write( "10101716 10 0.048307591 0.0 0.0 16 "); TXT.newLine();
+TXT.write( "10101717 10 0.047650345 0.0 0.0 17 "); TXT.newLine();
+TXT.write( "10101718 10 0.046007230 0.0 0.0 18 "); TXT.newLine();
+TXT.write( "10101719 10 0.043378245 0.0 0.0 19 "); TXT.newLine();
+TXT.write( "10101720 10 0.040420638 0.0 0.0 20 "); TXT.newLine();
+TXT.write( "10101721 10 0.041735130 0.0 0.0 21 "); TXT.newLine();
+TXT.write( "10101722 10 0.043049622 0.0 0.0 22 "); TXT.newLine();
+TXT.write( "10101723 10 0.045678607 0.0 0.0 23 "); TXT.newLine();
+TXT.write( "10101724 10 0.048636214 0.0 0.0 24 "); TXT.newLine();
+TXT.write( "10101725 10 0.051922445 0.0 0.0 25 "); TXT.newLine();
+TXT.write( "10101726 10 0.046664476 0.0 0.0 26 "); TXT.newLine();
+TXT.write( "* Additional right boundary: heat transfer hydraulic diameter; heated length fwd (10.: ignore); "); TXT.newLine();
+TXT.write( "* Heated length rev (10.: ignore); grid spacer length fwd (0.: ignore); grid spacer length rev (0.: ignore); "); TXT.newLine();
+TXT.write( "* Grid loss coef fwd (0.: ignore); grid loss coef rev (0.: ignore); boiling factor (1.: subcooled liquid); "); TXT.newLine();
+TXT.write( "* Heat structure number "); TXT.newLine();
+TXT.write( "10101901 " + 0.03*Dr.value() + " 10.0 10.0 0.0 0.0 0.0 0.0 1.0 26 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* CTAH "); TXT.newLine();
+TXT.write( "* Number of axial heat structures; number of radial mesh points; "); TXT.newLine();
+TXT.write( "* Geometry type (2: cylindrical, coupled to hydrodynamic component); "); TXT.newLine();
+TXT.write( "* Steady-state initialization flag (1: initial T calculated by code); "); TXT.newLine();
+TXT.write( "* Left boundary coordinate; reflood condition "); TXT.newLine();
+TXT.write( "10901000 99 4 2 1 " + 0.5*0.00457*Dr.value() + " 0 "); TXT.newLine();
+TXT.write( "* Mesh location flag; mesh format flag (see p.252 of Manual Appendix A) "); TXT.newLine();
+TXT.write( "10901100 0 2 "); TXT.newLine();
+TXT.write( "* Mesh interval distance; interval number "); TXT.newLine();
+TXT.write( "10901101 2.2225e-4 3 "); TXT.newLine();
+TXT.write( "* Composition (table number); interval number "); TXT.newLine();
+TXT.write( "10901201 100 3 "); TXT.newLine();
+TXT.write( "* Power input proportion; mesh interval number "); TXT.newLine();
+TXT.write( "10901301 1.0 3 "); TXT.newLine();
+TXT.write( "* Initial temperature; mesh point number "); TXT.newLine();
+TXT.write( "10901401 " + (TCorein*To_core_in.value()+TCoreout*To_core_out.value())/2 + "  4 "); TXT.newLine();
+TXT.write( "* Left boundary condition definition (here: vol number); increment; "); TXT.newLine();
+TXT.write( "* Boundary condition type (3060: HTC set in general table 60); surface area code (1: length); "); TXT.newLine();
+TXT.write( "* Length; heat structure number "); TXT.newLine();
+TXT.write( "10901501 90010000 10000 3060 1 5104.44 99 "); TXT.newLine();
+TXT.write( "* Right boundary condition, see above (-40: T defined in general table 40; 1000: T set in Word 1) "); TXT.newLine();
+TXT.write( "10901601 -40 0 1000 1 5104.44 99 "); TXT.newLine();
+TXT.write( "* Power source (table number); internal source multiplier; direct mod heatin mult (left) "); TXT.newLine();
+TXT.write( "* Direct mod heatin mult (right); heat structure number "); TXT.newLine();
+TXT.write( "10901701 0 0.0 0.0 0.0 99 "); TXT.newLine();
+TXT.write( "* Additional left boundary: heat transfer hydraulic diameter; heated length fwd (10.: ignore); "); TXT.newLine();
+TXT.write( "* Heated length rev (10.: ignore); grid spacer length fwd (0.: ignore); grid spacer length rev (0.: ignore); "); TXT.newLine();
+TXT.write( "* Grid loss coef fwd (0.: ignore); grid loss coef rev (0.: ignore); boiling factor (1.: subcooled liquid); "); TXT.newLine();
+TXT.write( "* Heat structure number "); TXT.newLine();
+TXT.write( "10901801 0.0 10.0 10.0 0.0 0.0 0.0 0.0 1.0 99 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* DHX tubes "); TXT.newLine();
+TXT.write( "* Number of axial heat structures; number of radial mesh points; "); TXT.newLine();
+TXT.write( "* Geometry type (2: cylindrical, coupled to hydrodynamic component); "); TXT.newLine();
+TXT.write( "* Steady-state initialization flag (1: initial T calculated by code); "); TXT.newLine();
+TXT.write( "* Left boundary coordinate; reflood condition "); TXT.newLine();
+TXT.write( "11901000 14 4 2 1 " + 0.5*0.0109*Dr.value() + " 0 "); TXT.newLine();
+TXT.write( "* Mesh location flag; mesh format flag (see p.252 of Manual Appendix A) "); TXT.newLine();
+TXT.write( "11901100 0 2 "); TXT.newLine();
+TXT.write( "* Mesh interval distance; interval number "); TXT.newLine();
+TXT.write( "11901101 2.2500e-4 3 "); TXT.newLine();
+TXT.write( "* Composition (table number); interval number "); TXT.newLine();
+TXT.write( "11901201 100 3 "); TXT.newLine();
+TXT.write( "* Power input proportion; mesh interval number "); TXT.newLine();
+TXT.write( "11901301 1.0 3 "); TXT.newLine();
+TXT.write( "* Initial temperature; mesh point number "); TXT.newLine();
+TXT.write( "11901401 " + (TDHX_in+TDHX_out)/2 + "  4 "); TXT.newLine();
+TXT.write( "* Left boundary condition definition (here: vol number); increment; "); TXT.newLine();
+TXT.write( "* Boundary condition type (101: convection); surface area code (1: length); "); TXT.newLine();
+TXT.write( "* Length; heat structure number "); TXT.newLine();
+TXT.write( "11901501 190010000 10000 101 1 " + 2.5*lr.value()*2*984/14 + " 14 "); TXT.newLine();
+TXT.write( "* Right boundary condition, see above "); TXT.newLine();
+TXT.write( "11901601 170010000 10000 101 1 " + 2.5*lr.value()*2*984/14 + " 14 "); TXT.newLine();
+TXT.write( "* Power source (table number); internal source multiplier; direct mod heatin mult (left) "); TXT.newLine();
+TXT.write( "* Direct mod heatin mult (right); heat structure number "); TXT.newLine();
+TXT.write( "11901701 0 0.0 0.0 0.0 14 "); TXT.newLine();
+TXT.write( "* Additional left boundary: heat transfer hydraulic diameter; heated length fwd (10.: ignore); "); TXT.newLine();
+TXT.write( "* Heated length rev (10.: ignore); grid spacer length fwd (0.: ignore); grid spacer length rev (0.: ignore); "); TXT.newLine();
+TXT.write( "* Grid loss coef fwd (0.: ignore); grid loss coef rev (0.: ignore); boiling factor (1.: subcooled liquid); "); TXT.newLine();
+TXT.write( "* Heat structure number "); TXT.newLine();
+TXT.write( "11901801 0.0 10.0 10.0 0.0 0.0 0.0 0.0 1.0 14 "); TXT.newLine();
+TXT.write( "* Additional right boundary: heat transfer hydraulic diameter; heated length fwd (10.: ignore); "); TXT.newLine();
+TXT.write( "* Heated length rev (10.: ignore); grid spacer length fwd (0.: ignore); grid spacer length rev (0.: ignore); "); TXT.newLine();
+TXT.write( "* Grid loss coef fwd (0.: ignore); grid loss coef rev (0.: ignore); boiling factor (1.: subcooled liquid); "); TXT.newLine();
+TXT.write( "* Heat structure number "); TXT.newLine();
+TXT.write( "11901901 " + (1.13e-2)*Dr.value() + " 10.0 10.0 0.0 0.0 0.0 0.0 1.0 14 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* TCHX "); TXT.newLine();
+TXT.write( "* Number of axial heat structures; number of radial mesh points; "); TXT.newLine();
+TXT.write( "* Geometry type (2: cylindrical, coupled to hydrodynamic component); "); TXT.newLine();
+TXT.write( "* Steady-state initialization flag (1: initial T calculated by code); "); TXT.newLine();
+TXT.write( "* Left boundary coordinate; reflood condition "); TXT.newLine();
+TXT.write( "12301000 34 4 2 1 " + 0.5*0.0109*Dr.value() + " 0 "); TXT.newLine();
+TXT.write( "* Mesh location flag; mesh format flag (see p.252 of Manual Appendix A) "); TXT.newLine();
+TXT.write( "12301100 0 2 "); TXT.newLine();
+TXT.write( "* Mesh interval distance; interval number "); TXT.newLine();
+TXT.write( "12301101 2.2500e-4 3 "); TXT.newLine();
+TXT.write( "* Composition (table number); interval number "); TXT.newLine();
+TXT.write( "12301201 100 3 "); TXT.newLine();
+TXT.write( "* Power input proportion; mesh interval number "); TXT.newLine();
+TXT.write( "12301301 1.0 3 "); TXT.newLine();
+TXT.write( "* Initial temperature; mesh point number "); TXT.newLine();
+TXT.write( "12301401 " + (TDHX_in+TDHX_out)/2 + "  4 "); TXT.newLine();
+TXT.write( "* Left boundary condition definition (here: vol number); increment; "); TXT.newLine();
+TXT.write( "* Boundary condition type (3070: HTC set in general table 70); surface area code (1: length); "); TXT.newLine();
+TXT.write( "* Length; heat structure number "); TXT.newLine();
+TXT.write( "12301501 230010000 10000 3070 1 " + 6.0*lr.value()*2*4*234/34 + " 34 "); TXT.newLine();
+TXT.write( "* Right boundary condition, see above (-50: T defined in general table 50; 1000: T set in Word 1) "); TXT.newLine();
+TXT.write( "12301601 -50 0 1000 1 " + 6.0*lr.value()*2*4*234/34 + " 34 "); TXT.newLine();
+TXT.write( "* Power source (table number); internal source multiplier; direct mod heatin mult (left) "); TXT.newLine();
+TXT.write( "* Direct mod heatin mult (right); heat structure number "); TXT.newLine();
+TXT.write( "12301701 0 0.0 0.0 0.0 34 "); TXT.newLine();
+TXT.write( "* Additional left boundary: heat transfer hydraulic diameter; heated length fwd (10.: ignore); "); TXT.newLine();
+TXT.write( "* Heated length rev (10.: ignore); grid spacer length fwd (0.: ignore); grid spacer length rev (0.: ignore); "); TXT.newLine();
+TXT.write( "* Grid loss coef fwd (0.: ignore); grid loss coef rev (0.: ignore); boiling factor (1.: subcooled liquid); "); TXT.newLine();
+TXT.write( "* Heat structure number "); TXT.newLine();
+TXT.write( "12301801 0.0 10.0 10.0 0.0 0.0 0.0 0.0 1.0 34 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "******************************************************* "); TXT.newLine();
+TXT.write( "*  Material properties "); TXT.newLine();
+TXT.write( "******************************************************* "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Stainless steel "); TXT.newLine();
+TXT.write( "* Material type (user supplied table); thermal conductivity format flag; "); TXT.newLine();
+TXT.write( "* Volumetric heat capacity format flag (see p.227 of Manual Appendix A) "); TXT.newLine();
+TXT.write( "20110000   tbl/fctn  1  1 "); TXT.newLine();
+TXT.write( "* Stainless steel thermal conductivity (T; k) "); TXT.newLine();
+TXT.write( "20110001    250.0   40.00 "); TXT.newLine();
+TXT.write( "20110002   3000.0   40.00 "); TXT.newLine();
+TXT.write( "* Stainless steel volumetric heat capacity (T; rho*cp) "); TXT.newLine();
+TXT.write( "20110051    250.0   3.50e6 "); TXT.newLine();
+TXT.write( "20110052   3000.0   3.50e6 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* H-451 graphite "); TXT.newLine();
+TXT.write( "* Material type (user supplied table); thermal conductivity format flag; "); TXT.newLine();
+TXT.write( "* Volumetric heat capacity format flag (see p.227 of Manual Appendix A) "); TXT.newLine();
+TXT.write( "20110100   tbl/fctn  1  1 "); TXT.newLine();
+TXT.write( "* Stainless steel thermal conductivity (T; k) "); TXT.newLine();
+TXT.write( "20110101    250.0   80.00 "); TXT.newLine();
+TXT.write( "20110102   3000.0   80.00 "); TXT.newLine();
+TXT.write( "* Stainless steel volumetric heat capacity (T; rho*cp) "); TXT.newLine();
+TXT.write( "20110151    250.0   3.00e6 "); TXT.newLine();
+TXT.write( "20110152   3000.0   3.00e6 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Graphite fuel "); TXT.newLine();
+TXT.write( "* Material type (user supplied table); thermal conductivity format flag; "); TXT.newLine();
+TXT.write( "* Volumetric heat capacity format flag (see p.227 of Manual Appendix A) "); TXT.newLine();
+TXT.write( "20110200   tbl/fctn  1  1 "); TXT.newLine();
+TXT.write( "* Stainless steel thermal conductivity (T; k) "); TXT.newLine();
+TXT.write( "20110201    250.0   15.00 "); TXT.newLine();
+TXT.write( "20110202   3000.0   15.00 "); TXT.newLine();
+TXT.write( "* Stainless steel volumetric heat capacity (T; rho*cp) "); TXT.newLine();
+TXT.write( "20110251    250.0   3.00e6 "); TXT.newLine();
+TXT.write( "20110252   3000.0   3.00e6 "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "******************************************************* "); TXT.newLine();
+TXT.write( "*  General tables "); TXT.newLine();
+TXT.write( "******************************************************* "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* Core power (from decay heat curve) "); TXT.newLine();
+TXT.write( "* Table type "); TXT.newLine();
+TXT.write( "20201000  power "); TXT.newLine();
+TXT.write( "* Time; power [W] "); TXT.newLine();
+TXT.write( "20201001 0.      " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*2.36e8); TXT.newLine();
+TXT.write( "20201002 1000.   " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*2.36e8); TXT.newLine();
+TXT.write( "20201003 1.001e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*1.25e7); TXT.newLine();
+TXT.write( "20201004 1.002e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*1.20e7); TXT.newLine();
+TXT.write( "20201005 1.004e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*1.13e7); TXT.newLine();
+TXT.write( "20201006 1.008e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*1.04e7); TXT.newLine();
+TXT.write( "20201007 1.016e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*9.51e6); TXT.newLine();
+TXT.write( "20201008 1.024e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*8.93e6); TXT.newLine();
+TXT.write( "20201009 1.032e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*8.51e6); TXT.newLine();
+TXT.write( "20201010 1.040e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*8.19e6); TXT.newLine();
+TXT.write( "20201011 1.048e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*7.92e6); TXT.newLine();
+TXT.write( "20201012 1.060e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*7.59e6); TXT.newLine();
+TXT.write( "20201013 1.120e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*6.59e6); TXT.newLine();
+TXT.write( "20201014 1.240e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*5.72e6); TXT.newLine();
+TXT.write( "20201015 1.480e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*4.96e6); TXT.newLine();
+TXT.write( "20201016 1.960e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*4.23e6); TXT.newLine();
+TXT.write( "20201017 2.440e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*3.80e6); TXT.newLine();
+TXT.write( "20201018 2.920e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*3.49e6); TXT.newLine();
+TXT.write( "20201019 3.400e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*3.25e6); TXT.newLine();
+TXT.write( "20201020 3.880e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*3.07e6); TXT.newLine();
+TXT.write( "20201021 4.360e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*2.92e6); TXT.newLine();
+TXT.write( "20201022 4.600e3 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*2.85e6); TXT.newLine();
+TXT.write( "20201023 1.320e4 " + (1/1.385)*(mo_core.value()*((1518+2.82*(To_core_out.value()*700+To_core_in.value()*600)/2)/2415.78)*(To_core_out.value()*700-To_core_in.value()*600)/(700-600))*1.92e6); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* CTAH outlet temperature "); TXT.newLine();
+TXT.write( "* Table type "); TXT.newLine();
+TXT.write( "20204000  temp "); TXT.newLine();
+TXT.write( "* Time; temperature [K] "); TXT.newLine();
+TXT.write( "20204001  0.00000  " + TCorein); TXT.newLine();
+TXT.write( "20204002  10000.0  " + TCorein); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* TCHX outlet temperature "); TXT.newLine();
+TXT.write( "* Table type "); TXT.newLine();
+TXT.write( "20205000  temp "); TXT.newLine();
+TXT.write( "* Time; temperature [K] "); TXT.newLine();
+TXT.write( "20205001  0.00000  " + TDHX_in); TXT.newLine();
+TXT.write( "20205002  10000.0  " + TDHX_in); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* CTAH heat transfer coefficient "); TXT.newLine();
+TXT.write( "* Table type "); TXT.newLine();
+TXT.write( "20206000  htc-t "); TXT.newLine();
+TXT.write( "* Time; heat transfer coefficient [W/m^2-K] "); TXT.newLine();
+TXT.write( "20206001  0.00000  2000. "); TXT.newLine();
+TXT.write( "20206002  10000.0  2000. "); TXT.newLine();
+TXT.write( "* "); TXT.newLine();
+TXT.write( "* TCHX heat transfer coefficient "); TXT.newLine();
+TXT.write( "* Table type "); TXT.newLine();
+TXT.write( "20207000  htc-t "); TXT.newLine();
+TXT.write( "* Time; heat transfer coefficient [W/m^2-K] "); TXT.newLine();
+TXT.write( "20207001  0.00000  1000. "); TXT.newLine();
+TXT.write( "20207002  10000.0  1000. "); TXT.newLine();
+TXT.write( " "); TXT.newLine();
+TXT.write( "* End of input "); TXT.newLine();
+TXT.write( ". "); TXT.newLine();
+
+
+                    
+                }
+                
+                
+                
+                TXT.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+
+            increment( allVars );
+        }
+
+        System.out.println("Files placed here");
+        System.out.println( filePath );
+    }
+
+    private static String makeFileName( Variable[] varList)
+    {
+        String name = "Test-";
+
+        for( int j = 0; j < varList.length; j++ )
+        {
+            name += varList[j].value() + "-";
+        }
+
+        name += ".txt";
+
+        return name;
+    }
+
+    /**
+     * Increments each variable in inputed array of variables appropiatly for next permutation
+     */
+    private static void increment( Variable[] varList )
+    {
+        for( int j = 0; j < varList.length; j++ )
+        {
+            if( !varList[j].nextValue() )
+            {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Calculates the number of permutations based on the inputed array of Variables
+     */
+    private static int calcPermNum( Variable[] varList )
+    {
+        int num = 1;
+        for( int j = 0; j < varList.length; j++ )
+        {
+            num *= calcNumSteps( varList[j] );
+        }
+        return num;
+    }
+
+    /**
+     * Calculates the number of necessary computational steps for the inputed variable
+     */
+    private static int calcNumSteps( Variable var )
+    {
+        if ( var.type().equals( "linear" ) )
+        {
+            return (int) ( ( var.b() - var.a() ) / var.step() + 1 );
+        }
+        else if ( var.type().equals( "nonLinear" ) )
+        {
+            return var.size();
+        }
+        else
+            return 0;
+    }
+
+    /**
+     * Generates Relap Input Text file Permutaion based upon the variables mentioned below in only the computer terminal. When changing
+     * the variable, make sure to put all your variables in the array allVars[]
+     */
+    private static void main1()
+    {
+        Variable pipeHieght = new Variable(10,10,40);
+        Variable pipeRadius = new Variable(5,1,8);
+        Variable pipeRoughness = new Variable(.001,.001,.004);
+
+        Variable[] allVars = new Variable[3];
+
+        allVars[0] = pipeHieght;
+        allVars[1] = pipeRadius;
+        allVars[2] = pipeRoughness;
+
+        for( int j = 0; j < calcPermNum( allVars ); j++ )
+        {
+
+            System.out.println( "1300000 my_pipe pipe" );
+            System.out.println( "1300101 " + pipeRoughness.value() + " 0 3" );
+            System.out.println( "1300201 " + pipeRadius.value()*pipeRadius.value()*pi + " 3" );
+            System.out.println( "1300301 " + pipeHieght.value() + " 0.1 2" );
+            System.out.println( "1300401 90 0" );
+            System.out.println(" ");
+
+            increment( allVars );
+        }
+    }
+    
+    /**
+    *
+    * to call getRandFloat(a,b,f)
+    *
+    *a is smallest possible value
+    *b is almost the largest value
+    *f is the number of decimal places you want
+    */
+    public static double getRandFloat(double a, double b, int f)
+    {
+        double rand = Math.random();
+        
+        rand = rand*(b-a)+a;
+        
+        rand = rand*exp(10,f);
+        
+        int rand1 = (int) rand;
+        
+        double rand2 = rand1/exp(10,f);
+        
+        return rand2;
+    }
+    
+    private static double exp(double b, int p)
+    {
+        double orig = b;
+        
+        for( int j = 0; j < p - 1; j++)
+        {
+            b *= orig;
+        }
+        
+        return b;
+    }
+}
