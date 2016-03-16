@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# Initial to 99 (no convergence)
+converge=99
+# Initial to -1 (since 1 will be added to it immediately after submitting the first job, which is iteration 0.)
+iterations=-1
+# Current location, which is the path to /home/novak/Test...-
+location=$(pwd)
+location=${location:12}
+
+# Until convergence has been reached (or maximum iterations condition inside this until statement)
+# continue iteration. 
+
+until [ "$converge" -le "1" ]; do
+
+# Run new (or original, if first time through) input on the cluster. Increase the iteration number by one. 
+	echo
+		sbatch runscript1
+
+	iterations=$((iterations + 1))
+
+	echo Beginning iteration number: $iterations
+	echo "***************************************************************"
+
+# [] Wait until the process has finished running to extract data from the output file. The process is finished
+#	when slurm.out is greater than about 6500 bytes (conservative amount put in to ensure completion).
+	slurm_out_size=0
+	until [ "$slurm_out_size" -ge "6500" ]; do
+		sleep 30
+		slurm_out_size=$(wc -c <"slurm.out")
+		echo "Running RELAP..."
+	done
+
+# Pass the iteration number into Ex.cpp for inclusion in the output file results.
+	g++ -std=c++0x Ex.cpp -o testexe
+	chmod +x testexe
+	./testexe <<< $iterations
+
+# Take the Ex.cpp output value as the convergence flag. 
+	converge=$?
+
+# [] Check if maximum number of iterations has been reached. 
+	if [ "$iterations" = "10" ]; then
+		echo "Maximum number of iterations reached."
+
+# [] Generate raw data output file by calling Plotting.cpp. Pass it the name of the directory for naming purposes.
+#	 Do not pass the first 11 characters, since they are /home/novak every time (redundant). 
+		g++ -std=c++0x Plotting.cpp -o testplot
+		chmod +x testplot
+		./testplot <<< $location
+		break
+	fi
+
+# Check if convergence has been reached (set to 1 in Ex.cpp if all convergence flags equal 1). 
+if [ "$converge" = "1" ]; then
+	echo "Convergence has been reached."
+	
+# [] Generate raw data output file by calling Plotting.cpp. Pass it the name of the directory for naming purposes.
+#	 Do not pass the first 11 characters, since they are /home/novak every time (redundant). 
+	g++ -std=c++0x Plotting.cpp -o testplot
+	chmod +x testplot
+	./testplot <<< $location
+
+# Submit most recent Input.txt for a final run (don't cut it off before finishing)
+	sbatch runscript1
+
+# wait until finished to break loop. Add function to neatly extract data into csv file. 
+	slurm_out_size=0
+	until [ "$slurm_out_size" -ge "10000" ]; do
+		sleep 30
+		slurm_out_size=$(wc -c <"slurm.out")
+		echo $slurm_out_size
+	done
+
+	g++ -std=c++0x FinalPlot.cpp -o testfinal
+	chmod +x testfinal
+	./testfinal <<< $location
+
+	break
+fi
+
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
