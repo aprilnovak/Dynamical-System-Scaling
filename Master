@@ -1,0 +1,152 @@
+#!/bin/bash
+
+# The sequence to perform this iterating scheme is to first send all of the input files to be run to the cluster
+# using ./ToCluster while on your home computer. Then, log into the cluster and type;
+#		sbatch starter
+# This will submit a job to the cluster (so that it will keep running if you close your computer or don't have wifi).
+# The command "sbatch starter" simply submits the command ./Master. "Master" is the file that sorts the input files each 
+# into a directory with the same name and copies over all necessary files to be used by ./irun, ./Ex.cpp, and ./Plotting.cpp. 
+
+
+# Input how the different variables are discretized. MUST MATCH BLUEJ FILE!
+declare -a l=(1.0)
+declare -a d=(1.0)
+declare -a core=(1.0)
+declare -a bypass=(0.01)
+declare -a DHX_shell=(1.0)
+declare -a DHX_tube=(1.0)
+declare -a T_Core_in=(1.0)
+declare -a T_Core_out=(1.0)
+declare -a T_DHX_in=(1.0)
+declare -a T_DHX_out=(1.0)
+declare -a T_DHX_out_shell=(1.0)
+declare -a dumdum=(1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0)
+
+num_options=$((${#l[@]} * ${#d[@]} * ${#core[@]} * ${#bypass[@]} * ${#DHX_shell[@]} * ${#DHX_tube[@]} * ${#T_Core_in[@]} * ${#T_Core_out[@]} * ${#T_DHX_in[@]} * ${#T_DHX_out[@]} * ${#T_DHX_out_shell[@]} * ${#dumdum[@]}))
+
+size_l=${#l[@]}
+size_d=${#d[@]}
+size_core=${#core[@]}
+size_bypass=${#bypass[@]}
+size_DHX_shell=${#DHX_shell[@]}
+size_DHX_tube=${#DHX_tube[@]}
+size_T_Core_in=${#T_Core_in[@]}
+size_T_Core_out=${#T_Core_out[@]}
+size_T_DHX_in=${#T_DHX_in[@]}
+size_T_DHX_out=${#T_DHX_out[@]}
+size_T_DHX_out_shell=${#T_DHX_out_shell[@]}
+size_dumdum=${#dumdum[@]}
+
+i_l=0
+i_d=0
+i_core=0
+i_bypass=0
+i_DHX_shell=0
+i_DHX_tube=0
+i_T_Core_in=0
+i_T_Core_out=0
+i_T_DHX_in=0
+i_T_DHX_out=0
+i_T_DHX_out_shell=0
+i_dumdum=0
+
+count=1
+
+# Transfer all input files over to the cluster (transfers over their directory, by typing ./ToCluster from personal computer).
+
+# Parse through all possible input combinations
+while [ "$count" -le "$num_options" ]; do
+
+if [ "$i_l" = "$(($size_l-1))" ]; then
+	i_l=0
+	if [ "$i_d" = "$(($size_d-1))" ]; then
+		i_d=0
+		if [ "$i_core" = "$(($size_core-1))" ]; then
+			i_core=0
+			if [ "$i_bypass" = "$((size_bypass-1))" ]; then
+				i_bypass=0
+				if [ "$i_DHX_shell" = "$((size_DHX_shell-1))" ]; then
+					i_DHX_shell=0
+					if [ "$i_DHX_tube" = "$((size_DHX_tube-1))" ]; then
+						i_DHX_tube=0
+						if [ "$i_T_Core_in" = "$((size_T_Core_in-1))" ]; then
+							i_T_Core_in=0
+							if [ "$i_T_Core_out" = "$((size_T_Core_out-1))" ]; then
+								i_T_Core_in=0
+								if [ "$i_T_DHX_in" = "$((size_T_DHX_in-1))" ]; then
+									i_T_DHX_in=0
+									if [ "$i_T_DHX_out" = "$((size_T_DHX_out-1))" ]; then
+										i_T_DHX_out=0
+										if [ "$i_T_DHX_out_shell" = "$((size_T_DHX_out_shell-1))" ]; then
+											i_T_DHX_out_shell=0
+											if [ "$i_dumdum" = "$((size_dumdum-1))" ]; then
+												i_dumdum=0
+											else
+												i_dumdum=$((i_dumdum+1))
+											fi
+										else
+											i_T_DHX_out_shell=$((i_T_DHX_out_shell+1))
+										fi
+									else
+										i_T_DHX_out=$((i_T_DHX_out+1))
+									fi
+								else
+									i_T_DHX_in=$((i_T_DHX_in+1))
+								fi
+							else
+								i_T_Core_in=$(($i_T_Core_in+1))
+							fi
+						else
+							i_T_Core_in=$(($i_T_Core_in+1))
+						fi
+					else
+						i_DHX_tube=$(($i_DHX_tube+1))
+					fi
+				else
+					i_DHX_shell=$(($i_DHX_shell+1))
+				fi
+			else
+				i_bypass=$(($i_bypass+1))
+			fi
+		else
+			i_core=$(($i_core+1))
+		fi
+	else
+		i_d=$(($i_d+1))
+	fi
+else
+	i_l=$(($i_l+1))
+fi
+
+count=$((count+1))
+
+
+# Create the folder to hold each input.
+echo
+	mkdir Test-${l[i_l]}-${d[i_d]}-${core[i_core]}-${bypass[i_bypass]}-${DHX_shell[i_DHX_shell]}-${DHX_tube[i_DHX_tube]}-${T_Core_in[i_T_Core_in]}-${T_Core_out[i_T_Core_out]}-${T_DHX_in[i_T_DHX_in]}-${T_DHX_out[i_T_DHX_out]}-${T_DHX_out_shell[i_T_DHX_out_shell]}-${dumdum[i_dumdum]}-
+# Transfer the input from PermutationOutput to that new directory.
+echo
+	mv PermutationOutput/Test-${l[i_l]}-${d[i_d]}-${core[i_core]}-${bypass[i_bypass]}-${DHX_shell[i_DHX_shell]}-${DHX_tube[i_DHX_tube]}-${T_Core_in[i_T_Core_in]}-${T_Core_out[i_T_Core_out]}-${T_DHX_in[i_T_DHX_in]}-${T_DHX_out[i_T_DHX_out]}-${T_DHX_out_shell[i_T_DHX_out_shell]}-${dumdum[i_dumdum]}-.txt Test-${l[i_l]}-${d[i_d]}-${core[i_core]}-${bypass[i_bypass]}-${DHX_shell[i_DHX_shell]}-${DHX_tube[i_DHX_tube]}-${T_Core_in[i_T_Core_in]}-${T_Core_out[i_T_Core_out]}-${T_DHX_in[i_T_DHX_in]}-${T_DHX_out[i_T_DHX_out]}-${T_DHX_out_shell[i_T_DHX_out_shell]}-${dumdum[i_dumdum]}-
+# Rename the input in each folder to Input.txt (so that the same runscript1 and Ex.cpp can be used)
+echo
+	mv Test-${l[i_l]}-${d[i_d]}-${core[i_core]}-${bypass[i_bypass]}-${DHX_shell[i_DHX_shell]}-${DHX_tube[i_DHX_tube]}-${T_Core_in[i_T_Core_in]}-${T_Core_out[i_T_Core_out]}-${T_DHX_in[i_T_DHX_in]}-${T_DHX_out[i_T_DHX_out]}-${T_DHX_out_shell[i_T_DHX_out_shell]}-${dumdum[i_dumdum]}-/Test-${l[i_l]}-${d[i_d]}-${core[i_core]}-${bypass[i_bypass]}-${DHX_shell[i_DHX_shell]}-${DHX_tube[i_DHX_tube]}-${T_Core_in[i_T_Core_in]}-${T_Core_out[i_T_Core_out]}-${T_DHX_in[i_T_DHX_in]}-${T_DHX_out[i_T_DHX_out]}-${T_DHX_out_shell[i_T_DHX_out_shell]}-${dumdum[i_dumdum]}-.txt Test-${l[i_l]}-${d[i_d]}-${core[i_core]}-${bypass[i_bypass]}-${DHX_shell[i_DHX_shell]}-${DHX_tube[i_DHX_tube]}-${T_Core_in[i_T_Core_in]}-${T_Core_out[i_T_Core_out]}-${T_DHX_in[i_T_DHX_in]}-${T_DHX_out[i_T_DHX_out]}-${T_DHX_out_shell[i_T_DHX_out_shell]}-${dumdum[i_dumdum]}-/Input.txt
+# Copy 1) runscript1, 2) thermodynamic property files, 3) iterationresults.txt , 4) irun, 5) Ex.cpp, and 6) Plotting.cpp
+echo
+	cp FinalPlot.cpp Plotting.cpp runscript1 iterationresults.txt tpf* irun Ex.cpp Test-${l[i_l]}-${d[i_d]}-${core[i_core]}-${bypass[i_bypass]}-${DHX_shell[i_DHX_shell]}-${DHX_tube[i_DHX_tube]}-${T_Core_in[i_T_Core_in]}-${T_Core_out[i_T_Core_out]}-${T_DHX_in[i_T_DHX_in]}-${T_DHX_out[i_T_DHX_out]}-${T_DHX_out_shell[i_T_DHX_out_shell]}-${dumdum[i_dumdum]}-
+# Give execution permissions to irun
+echo
+	chmod +x Test-${l[i_l]}-${d[i_d]}-${core[i_core]}-${bypass[i_bypass]}-${DHX_shell[i_DHX_shell]}-${DHX_tube[i_DHX_tube]}-${T_Core_in[i_T_Core_in]}-${T_Core_out[i_T_Core_out]}-${T_DHX_in[i_T_DHX_in]}-${T_DHX_out[i_T_DHX_out]}-${T_DHX_out_shell[i_T_DHX_out_shell]}-${dumdum[i_dumdum]}-/irun
+# Submit the iteration job.
+echo
+	cd Test-${l[i_l]}-${d[i_d]}-${core[i_core]}-${bypass[i_bypass]}-${DHX_shell[i_DHX_shell]}-${DHX_tube[i_DHX_tube]}-${T_Core_in[i_T_Core_in]}-${T_Core_out[i_T_Core_out]}-${T_DHX_in[i_T_DHX_in]}-${T_DHX_out[i_T_DHX_out]}-${T_DHX_out_shell[i_T_DHX_out_shell]}-${dumdum[i_dumdum]}-
+echo
+	./irun
+echo
+	cd ..
+
+done
+
+
+# Delete the folder Permutation output (after all folders completed)
+echo
+	rm -r PermutationOutput
